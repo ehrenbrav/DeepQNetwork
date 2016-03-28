@@ -259,7 +259,7 @@ function trans:get_recent()
     return self:concatFrames(1, true):float():div(255)
 end
 
-
+-- Return a full state in a given index: (s, a, r, s2, terminal).
 function trans:get(index)
     local s = self:concatFrames(index)
     local s2 = self:concatFrames(index+1)
@@ -268,7 +268,7 @@ function trans:get(index)
     return s, self.a[ar_index], self.r[ar_index], s2, self.t[ar_index+1]
 end
 
-
+-- Add a new experience
 function trans:add(s, a, r, term)
     assert(s, 'State cannot be nil')
     assert(a, 'Action cannot be nil')
@@ -277,10 +277,19 @@ function trans:add(s, a, r, term)
     -- Incremenet until at full capacity
     if self.numEntries < self.maxSize then
         self.numEntries = self.numEntries + 1
+        
+        -- Spam the console.
+        if self.numEntries % 1000 == 0 then
+          print("Recorded experiences: " .. self.numEntries)
+        end
+        if self.numEntries == self.maxSize then
+          print("Filled up the experience record...")
+        end
     end
 
     -- Always insert at next index, then wrap around
     self.insertIndex = self.insertIndex + 1
+    
     -- Overwrite oldest experience once at capacity
     if self.insertIndex > self.maxSize then
         self.insertIndex = 1
@@ -290,6 +299,8 @@ function trans:add(s, a, r, term)
     self.s[self.insertIndex] = s:clone():float():mul(255)
     self.a[self.insertIndex] = a
     self.r[self.insertIndex] = r
+    
+    -- Record whether this was a terminal experience.
     if term then
         self.t[self.insertIndex] = 1
     else
@@ -299,15 +310,22 @@ end
 
 
 function trans:add_recent_state(s, term)
+
+    -- Process...
     local s = s:clone():float():mul(255):byte()
+    
+    -- Handle no recent states.
     if #self.recent_s == 0 then
         for i=1,self.recentMemSize do
             table.insert(self.recent_s, s:clone():zero())
             table.insert(self.recent_t, 1)
         end
     end
-
+    
+    -- Record.
     table.insert(self.recent_s, s)
+    
+    -- Record whether this was a terminal state.
     if term then
         table.insert(self.recent_t, 1)
     else

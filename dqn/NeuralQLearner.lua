@@ -298,22 +298,28 @@ end
 
 
 function nql:perceive(reward, rawstate, terminal, testing, testing_ep)
+
     -- Preprocess state (will be set to nil if terminal)
     local state = self:preprocess(rawstate):float()
     local curState
 
+    -- Clip the reward to the max/min, if requested.
     if self.max_reward then
         reward = math.min(reward, self.max_reward)
     end
     if self.min_reward then
         reward = math.max(reward, self.min_reward)
     end
+    
+    -- Rescale the reward, if requested.
     if self.rescale_r then
         self.r_max = math.max(self.r_max, reward)
     end
-
+  
+    -- Add the preprocessed state to the transition table.
     self.transitions:add_recent_state(state, terminal)
 
+    -- TODO Weird, currentFullState is never actually read...delete?
     local currentFullState = self.transitions:get_recent()
 
     --Store transition s, a, r, s'
@@ -322,6 +328,7 @@ function nql:perceive(reward, rawstate, terminal, testing, testing_ep)
                              self.lastTerminal, priority)
     end
 
+    -- OK time to start learning...
     if self.numSteps == self.learn_start+1 and not testing then
         self:sample_validation_data()
     end
@@ -364,15 +371,19 @@ function nql:perceive(reward, rawstate, terminal, testing, testing_ep)
     end
 end
 
-
+-- Return an action for the given state.
 function nql:eGreedy(state, testing_ep)
     self.ep = testing_ep or (self.ep_end +
                 math.max(0, (self.ep_start - self.ep_end) * (self.ep_endt -
                 math.max(0, self.numSteps - self.learn_start))/self.ep_endt))
     -- Epsilon greedy
     if torch.uniform() < self.ep then
+    
+        -- Select a random action, with probability ep.
         return torch.random(1, self.n_actions)
     else
+    
+        -- Select the action with the highest Q value.
         return self:greedy(state)
     end
 end

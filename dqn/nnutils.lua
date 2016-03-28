@@ -40,14 +40,14 @@ end
 -- Build a string of average absolute weight values for the modules in the
 -- given network.
 function get_weight_norms(module)
-    return "Weight norms:\n" .. recursive_map(module, "weight", abs_mean) ..
+    return "Average absolute value weights:\n" .. recursive_map(module, "weight", abs_mean) ..
             "\nWeight max:\n" .. recursive_map(module, "weight", abs_max)
 end
 
 -- Build a string of average absolute weight gradient values for the modules
 -- in the given network.
 function get_grad_norms(module)
-    return "Weight grad norms:\n" ..
+    return "Average absolute value weight gradients:\n" ..
         recursive_map(module, "gradWeight", abs_mean) ..
         "\nWeight grad max:\n" .. recursive_map(module, "gradWeight", abs_max)
 end

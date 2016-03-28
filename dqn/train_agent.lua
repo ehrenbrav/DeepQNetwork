@@ -75,27 +75,47 @@ local nrewards
 local nepisodes
 local episode_reward
 
+-- Take one single initial step to get kicked-off...
 local screen, reward, terminal = game_env:getState()
 
-print("Iteration ..", step)
+print("Step: " .. step)
 local win = nil
 while step < opt.steps do
-    step = step + 1
+    step = step + 1 
     local action_index = agent:perceive(reward, screen, terminal)
 
     -- game over? get next game!
     if not terminal then
         screen, reward, terminal = game_env:step(game_actions[action_index], true)
+            
+      -- Spam the console.
+      if opt.verbose > 2 and reward ~= 0 then
+        print("Reward: " .. reward)
+      end
     else
-        if opt.random_starts > 0 then
-            screen, reward, terminal = game_env:nextRandomGame()
-        else
-            screen, reward, terminal = game_env:newGame()
-        end
+      if opt.random_starts > 0 then
+          screen, reward, terminal = game_env:nextRandomGame()
+            
+          -- Spam the console.
+          if opt.verbose > 2 then
+            print("New random episode.")
+          end
+      else
+          screen, reward, terminal = game_env:newGame()
+            
+          -- Spam the console.
+          if opt.verbose > 2 then
+            print("New episode.")
+          end
+       end
     end
 
     -- display screen
-    win = image.display({image=screen, win=win})
+    -- win = image.display({image=screen, win=win})
+    
+    if step % 1000 == 0 then
+        print("Steps: ", step)
+    end
 
     if step % opt.prog_freq == 0 then
         assert(step==agent.numSteps, 'trainer step: ' .. step ..
@@ -108,6 +128,10 @@ while step < opt.steps do
     if step%1000 == 0 then collectgarbage() end
 
     if step % opt.eval_freq == 0 and step > learn_start then
+    
+        print("***********")
+        print("Starting evaluation!")
+        print("***********")
 
         screen, reward, terminal = game_env:newGame()
 
@@ -124,7 +148,7 @@ while step < opt.steps do
             screen, reward, terminal = game_env:step(game_actions[action_index])
 
             -- display screen
-            win = image.display({image=screen, win=win})
+            -- win = image.display({image=screen, win=win})
 
             if estep%1000 == 0 then collectgarbage() end
 
@@ -212,7 +236,9 @@ while step < opt.steps do
             agent.valid_term = s, a, r, s2, term
         agent.w, agent.dw, agent.g, agent.g2, agent.delta, agent.delta2,
             agent.deltas, agent.tmp = w, dw, g, g2, delta, delta2, deltas, tmp
+        print("***********")    
         print('Saved:', filename .. '.t7')
+        print("***********")
         io.flush()
         collectgarbage()
     end
