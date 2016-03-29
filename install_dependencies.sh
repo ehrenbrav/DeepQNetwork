@@ -37,6 +37,7 @@ sudo apt-get install -qqy libqt4-dev
 sudo apt-get install -qqy liblua5.1-0-dev
 sudo apt-get install -qqy libgd-dev
 sudo apt-get install -qqy scons
+sudo apt-get install -qqy libgtk2.0-dev
 sudo apt-get update
 
 
@@ -113,7 +114,7 @@ echo "Installing neswrap ... "
 cd /tmp
 rm -rf neswrap
 git clone https://github.com/ehrenbrav/neswrap.git
-cd alewrap
+cd neswrap
 $PREFIX/bin/luarocks make
 RET=$?; if [ $RET -ne 0 ]; then echo "Error. Exiting."; exit $RET; fi
 echo "neswrap installation completed"
