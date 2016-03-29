@@ -134,18 +134,18 @@ function nql:__init(args)
     self.lastState = nil
     self.lastAction = nil
     self.v_avg = 0 -- V running average.
-    self.tderr_avg = 0 -- TD error running average.
+    self.tderr_avg = 0 -- Temporal-difference error running average.
 
     self.q_max = 1
     self.r_max = 1
 
-    self.w, self.dw = self.network:getParameters()
-    self.dw:zero()
+    self.w, self.dw = self.network:getParameters() -- Load the weights.
+    self.dw:zero() -- Set gradient to zero.
 
-    self.deltas = self.dw:clone():fill(0)
+    self.deltas = self.dw:clone():fill(0) 
 
     self.tmp= self.dw:clone():fill(0)
-    self.g  = self.dw:clone():fill(0)
+    self.g  = self.dw:clone():fill(0) 
     self.g2 = self.dw:clone():fill(0)
 
     if self.target_q then
@@ -176,7 +176,8 @@ function nql:preprocess(rawstate)
     return rawstate
 end
 
-
+-- The idea here is to calculate the target actions for 
+-- the minibatch and the associated errors.
 function nql:getQUpdate(args)
     local s, a, r, s2, term, delta
     local q, q2, q2_max
@@ -193,6 +194,7 @@ function nql:getQUpdate(args)
     -- delta = r + (1-terminal) * gamma * max_a Q(s2, a) - Q(s, a)
     term = term:clone():float():mul(-1):add(1)
 
+    -- If we don't have a target Q network yet, make one and use it.
     local target_q_net
     if self.target_q then
         target_q_net = self.target_network
@@ -201,16 +203,21 @@ function nql:getQUpdate(args)
     end
 
     -- Compute max_a Q(s_2, a).
+    -- This yields the Q values for the best actions.
     q2_max = target_q_net:forward(s2):float():max(2)
 
     -- Compute q2 = (1-terminal) * gamma * max_a Q(s2, a)
+    -- Discounted by gamma and set to zero if terminal.
     q2 = q2_max:clone():mul(self.discount):cmul(term)
 
+    -- Set delta equal to the rewards in the minibatch.
     delta = r:clone():float()
 
     if self.rescale_r then
         delta:div(self.r_max)
     end
+    
+    -- Add the discounted Q(s2, a) values to these rewards.
     delta:add(q2)
 
     -- q = Q(s,a)
@@ -219,8 +226,11 @@ function nql:getQUpdate(args)
     for i=1,q_all:size(1) do
         q[i] = q_all[i][a[i]]
     end
+    
+    -- Finally, subtract out the Q(s, a) values.
     delta:add(-1, q)
-
+  
+    -- Keep the deltas bounded, if requested.
     if self.clip_delta then
         delta[delta:ge(self.clip_delta)] = self.clip_delta
         delta[delta:le(-self.clip_delta)] = -self.clip_delta
@@ -242,18 +252,20 @@ function nql:qLearnMinibatch()
     -- w += alpha * (r + gamma max Q(s2,a2) - Q(s,a)) * dQ(s,a)/dw
     assert(self.transitions:size() > self.minibatch_size)
 
+    -- Load a minibatch of experiences.
     local s, a, r, s2, term = self.transitions:sample(self.minibatch_size)
 
+    -- Feed these experiences into the Q network.
     local targets, delta, q2_max = self:getQUpdate{s=s, a=a, r=r, s2=s2,
         term=term, update_qmax=true}
 
     -- zero gradients of parameters
     self.dw:zero()
 
-    -- get new gradient
+    -- Do a backwards pass to calculate the gradients.
     self.network:backward(s, targets)
 
-    -- add weight cost to gradient
+    -- add weight cost to gradient - this defaults to zero.
     self.dw:add(-self.wc, self.w)
 
     -- compute linearly annealed learning rate
@@ -277,7 +289,7 @@ function nql:qLearnMinibatch()
     self.w:add(self.deltas)
 end
 
-
+-- Returns valid_size experiences as validation data.
 function nql:sample_validation_data()
     local s, a, r, s2, term = self.transitions:sample(self.valid_size)
     self.valid_s    = s:clone()
@@ -316,10 +328,10 @@ function nql:perceive(reward, rawstate, terminal, testing, testing_ep)
         self.r_max = math.max(self.r_max, reward)
     end
   
-    -- Add the preprocessed state to the transition table.
+    -- Add the preprocessed state and terminal value to the recent state table.
     self.transitions:add_recent_state(state, terminal)
 
-    -- TODO Weird, currentFullState is never actually read...delete?
+    -- TODO weird, currentFullState is never actually read...delete?
     local currentFullState = self.transitions:get_recent()
 
     --Store transition s, a, r, s'
@@ -328,23 +340,27 @@ function nql:perceive(reward, rawstate, terminal, testing, testing_ep)
                              self.lastTerminal, priority)
     end
 
-    -- OK time to start learning...
+    -- Load validation data.
+    -- TODO why do this each step?
     if self.numSteps == self.learn_start+1 and not testing then
         self:sample_validation_data()
     end
-
+    
+    -- Get the recent states and resize for the Q network.
     curState= self.transitions:get_recent()
     curState = curState:resize(1, unpack(self.input_dims))
 
-    -- Select action
+    -- OK use the Q network to select an action based on 
+    -- the trailing few states.
     local actionIndex = 1
     if not terminal then
         actionIndex = self:eGreedy(curState, testing_ep)
     end
 
+    -- Add this action to our experiences.
     self.transitions:add_recent_action(actionIndex)
 
-    --Do some Q-learning updates
+    -- Learn...
     if self.numSteps > self.learn_start and not testing and
         self.numSteps % self.update_freq == 0 then
         for i = 1, self.n_replay do
@@ -352,18 +368,22 @@ function nql:perceive(reward, rawstate, terminal, testing, testing_ep)
         end
     end
 
+    -- Track the number of learning steps we've undertaken.
     if not testing then
         self.numSteps = self.numSteps + 1
     end
 
+    -- Save the state and action for the next round.
     self.lastState = state:clone()
     self.lastAction = actionIndex
     self.lastTerminal = terminal
 
+    -- After target_q steps, replace the existing Q network with the newer one.
     if self.target_q and self.numSteps % self.target_q == 1 then
         self.target_network = self.network:clone()
     end
 
+    -- Return the action so we can feed it to the emulator.
     if not terminal then
         return actionIndex
     else
@@ -376,7 +396,8 @@ function nql:eGreedy(state, testing_ep)
     self.ep = testing_ep or (self.ep_end +
                 math.max(0, (self.ep_start - self.ep_end) * (self.ep_endt -
                 math.max(0, self.numSteps - self.learn_start))/self.ep_endt))
-    -- Epsilon greedy
+                
+    -- Select an action, maybe randomly.
     if torch.uniform() < self.ep then
     
         -- Select a random action, with probability ep.
@@ -388,7 +409,7 @@ function nql:eGreedy(state, testing_ep)
     end
 end
 
-
+-- Return the action with the highest value given this state.
 function nql:greedy(state)
     -- Turn single state into minibatch.  Needed for convolutional nets.
     if state:dim() == 2 then
@@ -399,8 +420,11 @@ function nql:greedy(state)
     if self.gpu >= 0 then
         state = state:cuda()
     end
-
+    
+    -- Feed the state into the network.
     local q = self.network:forward(state):float():squeeze()
+    
+    -- Initialize the best Q and best action variables.
     local maxq = q[1]
     local besta = {1}
 
@@ -409,14 +433,19 @@ function nql:greedy(state)
         if q[a] > maxq then
             besta = { a }
             maxq = q[a]
+            
+        -- Tie, add a second best action to the list.
         elseif q[a] == maxq then
             besta[#besta+1] = a
         end
     end
+    
+    -- Keep track of our highest Q value.
     self.bestq = maxq
 
     local r = torch.random(1, #besta)
-
+    
+    -- Pick at random from the equally-performing actions.
     self.lastAction = besta[r]
 
     return besta[r]

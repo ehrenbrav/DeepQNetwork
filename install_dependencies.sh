@@ -99,23 +99,23 @@ $PREFIX/bin/luarocks install nngraph
 RET=$?; if [ $RET -ne 0 ]; then echo "Error. Exiting."; exit $RET; fi
 echo "nngraph installation completed"
 
-echo "Installing Xitari ... "
+echo "Installing FCEUX_Learning_Environment ... "
 cd /tmp
-rm -rf xitari
-git clone https://github.com/deepmind/xitari.git
-cd xitari
+rm -rf FCEUX_Learning_Environment
+git clone https://github.com/ehrenbrav/FCEUX_Learning_Environment.git
+cd FCEUX_Learning_Environment
 $PREFIX/bin/luarocks make
 RET=$?; if [ $RET -ne 0 ]; then echo "Error. Exiting."; exit $RET; fi
-echo "Xitari installation completed"
+echo "FCEUX installation completed"
 
-echo "Installing Alewrap ... "
+echo "Installing neswrap ... "
 cd /tmp
-rm -rf alewrap
-git clone https://github.com/deepmind/alewrap.git
+rm -rf neswrap
+git clone https://github.com/ehrenbrav/neswrap.git
 cd alewrap
 $PREFIX/bin/luarocks make
 RET=$?; if [ $RET -ne 0 ]; then echo "Error. Exiting."; exit $RET; fi
-echo "Alewrap installation completed"
+echo "neswrap installation completed"
 
 echo "Installing Lua-GD ... "
 mkdir $PREFIX/src

@@ -86,6 +86,9 @@ while step < opt.steps do
 
     -- game over? get next game!
     if not terminal then
+    
+        -- Play the selected action in the emulator. 
+        -- Record the resulting screen, reward, and whether this was terminal.
         screen, reward, terminal = game_env:step(game_actions[action_index], true)
             
       -- Spam the console.

@@ -114,27 +114,39 @@ function trans:fill_buffer()
     end
 end
 
-
+-- Returns one randomly sampled experience from memory. 
+-- Consider setting a non-zero probability that we discard termal
+-- or non-reward experiences. 
 function trans:sample_one()
     assert(self.numEntries > 1)
     local index
     local valid = false
+    
+    -- Loop to find a valid experience to send back.
     while not valid do
+    
         -- start at 2 because of previous action
+        -- Grab a random experience from the memory table.
         index = torch.random(2, self.numEntries-self.recentMemSize)
+        
+        
         if self.t[index+self.recentMemSize-1] == 0 then
             valid = true
         end
+        
+        -- If nonTermProb is set to less than 1, there is a chance
+        -- we discard terminal experiences. Not sure why we'd want to do this...
         if self.nonTermProb < 1 and self.t[index+self.recentMemSize] == 0 and
             torch.uniform() > self.nonTermProb then
-            -- Discard non-terminal states with probability (1-nonTermProb).
             -- Note that this is the terminal flag for s_{t+1}.
             valid = false
         end
+        
+        -- If nonEventProb is set to less than one, there is a chance
+        -- we discard experiences not resulting in rewards. Would this accelerate learning?
         if self.nonEventProb < 1 and self.t[index+self.recentMemSize] == 0 and
             self.r[index+self.recentMemSize-1] == 0 and
             torch.uniform() > self.nonTermProb then
-            -- Discard non-terminal or non-reward states with
             -- probability (1-nonTermProb).
             valid = false
         end
@@ -169,6 +181,8 @@ end
 
 
 function trans:concatFrames(index, use_recent)
+
+    -- Should we use the recent state tables?
     if use_recent then
         s, t = self.recent_s, self.recent_t
     else
@@ -178,10 +192,10 @@ function trans:concatFrames(index, use_recent)
     local fullstate = s[1].new()
     fullstate:resize(self.histLen, unpack(s[1]:size():totable()))
 
-    -- Zero out frames from all but the most recent episode.
     local zero_out = false
     local episode_start = self.histLen
 
+    -- Zero out any frames occuring after a terminal frame.
     for i=self.histLen-1,1,-1 do
         if not zero_out then
             for j=index+self.histIndices[i]-1,index+self.histIndices[i+1]-2 do
@@ -199,6 +213,7 @@ function trans:concatFrames(index, use_recent)
         end
     end
 
+    -- If there are no zero frames, copy the hist_len most recent frames.
     if self.zeroFrames == 0 then
         episode_start = 1
     end
@@ -253,7 +268,7 @@ function trans:concatActions(index, use_recent)
     return act_hist
 end
 
-
+-- Get the hist_len most recent frames.
 function trans:get_recent()
     -- Assumes that the most recent state has been added, but the action has not
     return self:concatFrames(1, true):float():div(255)
@@ -268,13 +283,13 @@ function trans:get(index)
     return s, self.a[ar_index], self.r[ar_index], s2, self.t[ar_index+1]
 end
 
--- Add a new experience
+-- Add a new experience.
 function trans:add(s, a, r, term)
     assert(s, 'State cannot be nil')
     assert(a, 'Action cannot be nil')
     assert(r, 'Reward cannot be nil')
 
-    -- Incremenet until at full capacity
+    -- Incremement the memory counter.
     if self.numEntries < self.maxSize then
         self.numEntries = self.numEntries + 1
         
@@ -322,17 +337,17 @@ function trans:add_recent_state(s, term)
         end
     end
     
-    -- Record.
+    -- Record the state in the recent_s list.
     table.insert(self.recent_s, s)
     
-    -- Record whether this was a terminal state.
+    -- Record whether this was a terminal state in the recent_t list.
     if term then
         table.insert(self.recent_t, 1)
     else
         table.insert(self.recent_t, 0)
     end
 
-    -- Keep recentMemSize states.
+    -- recentMemSize is equal to the hist_len * hist_spacing
     if #self.recent_s > self.recentMemSize then
         table.remove(self.recent_s, 1)
         table.remove(self.recent_t, 1)
