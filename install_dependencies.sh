@@ -36,6 +36,7 @@ sudo apt-get install -qqy unzip
 sudo apt-get install -qqy libqt4-dev
 sudo apt-get install -qqy liblua5.1-0-dev
 sudo apt-get install -qqy libgd-dev
+sudo apt-get install -qqy scons
 sudo apt-get update
 
 
