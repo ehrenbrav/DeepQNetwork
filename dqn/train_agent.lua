@@ -117,7 +117,7 @@ while step < opt.steps do
     -- win = image.display({image=screen, win=win})
 
     -- Logging...
-    if step % 1000 == 0 then
+    if step % 10000 == 0 then
        local elapsed_step_time = sys.clock() - last_step_log_time
        last_step_log_time = sys.clock()
        print("Steps: " .. step .. " Time: " .. elapsed_step_time)
