@@ -347,6 +347,7 @@ function trans:add_recent_state(s, term)
         table.insert(self.recent_t, 0)
     end
 
+    -- Kick out old recent states.
     -- recentMemSize is equal to the hist_len * hist_spacing
     if #self.recent_s > self.recentMemSize then
         table.remove(self.recent_s, 1)
