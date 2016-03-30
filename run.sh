@@ -50,7 +50,7 @@ prog_freq=2000 # How often do you want a progress report?
 # PERFORMANCE AND DEBUG OPTIONS
 gpu=1
 num_threads=8
-verbose=2 # 2 is default. 3 turns on debugging messages about what the model is doing.
+verbose=3 # 2 is default. 3 turns on debugging messages about what the model is doing.
 random_starts=0 # How many NOOPs to perform at the start of a game (random number up to this value). Shouldn't matter for SMB?
 seed=1
 

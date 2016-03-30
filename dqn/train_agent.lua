@@ -92,7 +92,7 @@ while step < opt.steps do
         screen, reward, terminal = game_env:step(game_actions[action_index], true)
             
       -- Spam the console.
-      if opt.verbose > 2 and reward ~= 0 then
+      if opt.verbose > 3 and reward ~= 0 then
         print("Reward: " .. reward)
       end
     else
@@ -100,14 +100,14 @@ while step < opt.steps do
           screen, reward, terminal = game_env:nextRandomGame()
             
           -- Spam the console.
-          if opt.verbose > 2 then
+          if opt.verbose > 3 then
             print("New random episode.")
           end
       else
           screen, reward, terminal = game_env:newGame()
             
           -- Spam the console.
-          if opt.verbose > 2 then
+          if opt.verbose > 3 then
             print("New episode.")
           end
        end
