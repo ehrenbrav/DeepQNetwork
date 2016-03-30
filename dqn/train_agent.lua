@@ -78,7 +78,7 @@ local episode_reward
 -- Take one single initial step to get kicked-off...
 local screen, reward, terminal = game_env:getState()
 
-print("Step: " .. step)
+local last_step_log_time = sys.clock()
 local win = nil
 while step < opt.steps do
     step = step + 1 
@@ -115,9 +115,12 @@ while step < opt.steps do
 
     -- display screen
     -- win = image.display({image=screen, win=win})
-    
+
+    -- Logging...
     if step % 1000 == 0 then
-        print("Steps: ", step)
+       local elapsed_step_time = sys.clock() - last_step_log_time
+       last_step_log_time = sys.clock()
+       print("Steps: " .. step .. " Time: " .. elapsed_step_time)
     end
 
     if step % opt.prog_freq == 0 then
