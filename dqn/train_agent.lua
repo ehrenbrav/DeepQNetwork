@@ -168,7 +168,11 @@ while step < opt.steps do
                 total_reward = total_reward + episode_reward
                 episode_reward = 0
                 nepisodes = nepisodes + 1
-                screen, reward, terminal = game_env:nextRandomGame()
+                if opt.random_starts > 0 then
+                  screen, reward, terminal = game_env:nextRandomGame()
+                else
+                  screen, reward, terminal = game_env:newGame()
+                end
             end
         end
 
