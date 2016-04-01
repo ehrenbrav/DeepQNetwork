@@ -29,13 +29,14 @@ actrep=10 # Number of times an action is repeated (and a screen returned). 4 for
 # LEARNING OPTIONS
 lr=0.00025 # This seems to be a *very* gentle learning rate...should it be adjusted if rewards are outside [-1, 1]?
 learn_start=600 # Only start learning after this many steps. Should be bigger than bufferSize. Was set to 50k for Atari.
-n_replay=1 # Number of experiences to replay per learning step, sampled randomly.
+n_replay=1 # Minibatches to learn from each step.
 replay_memory=10000 # Set small to speed up debugging. 10M is the Atari setting... Big memory object!
+nonEventProb=0.25
 
 # Q NETWORK OPTIONS
 netfile="\"convnet_atari3\""
 target_q=1000 # How many steps to replace the target Q nework with the updated one.
-update_freq=10 # How often do we update the Q network? Changed from 4 for Atari... 
+update_freq=10 # How many steps between learning? Changed from 4 for Atari... 
 hist_len=4 # Number of trailing frames to input into the Q network.
 discount=0.99 # Discount rate given to future rewards.
 ep=1 # The probability of choosing a random action rather than the best predicted action.
@@ -57,7 +58,7 @@ seed=1
 # THE UGLY UNDERBELLY
 pool_frms="type="$pool_frms_type",size="$pool_frms_size
 
-agent_params="lr="$lr",ep="$ep",ep_end="$eps_end",ep_endt="$eps_endt",discount="$discount",hist_len="$hist_len",learn_start="$learn_start",replay_memory="$replay_memory",update_freq="$update_freq",n_replay="$n_replay",network="$netfile",preproc="$preproc_net",state_dim="$state_dim",minibatch_size=32,ncols="$ncols",bufferSize=512,valid_size=500,target_q="$target_q",clip_delta=1" # Deleted r_rescale, max_reward and min_reward for the SMB case.
+agent_params="lr="$lr",ep="$ep",ep_end="$eps_end",ep_endt="$eps_endt",discount="$discount",hist_len="$hist_len",learn_start="$learn_start",replay_memory="$replay_memory",update_freq="$update_freq",n_replay="$n_replay",network="$netfile",preproc="$preproc_net",state_dim="$state_dim",minibatch_size=32,ncols="$ncols",bufferSize=512,valid_size=500,target_q="$target_q",clip_delta=1",nonEventProb="$nonEventProb" # Deleted r_rescale, max_reward and min_reward for the SMB case.
 
 args="-framework $FRAMEWORK -game_path $game_path -name $agent_name -env $ENV -env_params $env_params -agent $agent -agent_params $agent_params -steps $steps -eval_freq $eval_freq -eval_steps $eval_steps -prog_freq $prog_freq -save_freq $save_freq -actrep $actrep -gpu $gpu -random_starts $random_starts -pool_frms $pool_frms -seed $seed -threads $num_threads -verbose $verbose"
 

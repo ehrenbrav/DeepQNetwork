@@ -144,10 +144,9 @@ function trans:sample_one()
         
         -- If nonEventProb is set to less than one, there is a chance
         -- we discard experiences not resulting in rewards. Would this accelerate learning?
-        if self.nonEventProb < 1 and self.t[index+self.recentMemSize] == 0 and
-            self.r[index+self.recentMemSize-1] == 0 and
-            torch.uniform() > self.nonTermProb then
-            -- probability (1-nonTermProb).
+        if self.nonEventProb < 1 and self.r[index+self.recentMemSize-1] == 0 and
+            torch.uniform() > self.nonEventProb then
+            -- probability (1-nonEventProb).
             valid = false
         end
     end
