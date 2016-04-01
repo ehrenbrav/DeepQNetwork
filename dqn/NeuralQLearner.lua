@@ -9,6 +9,7 @@ if not dqn then
 end
 
 local nql = torch.class('dqn.NeuralQLearner')
+local win = nil
 
 
 function nql:__init(args)
@@ -58,10 +59,11 @@ function nql:__init(args)
     self.histType       = args.histType or "linear"  -- history type to use
     self.histSpacing    = args.histSpacing or 1
     self.nonTermProb    = args.nonTermProb or 1
+    self.nonEventProb   = args.nonEventProb
     self.bufferSize     = args.bufferSize or 512
 
     self.transition_params = args.transition_params or {}
-
+    
     self.network    = args.network or self:createNetwork()
 
     -- check whether there is a network file
@@ -125,7 +127,7 @@ function nql:__init(args)
         histLen = self.hist_len, gpu = self.gpu,
         maxSize = self.replay_memory, histType = self.histType,
         histSpacing = self.histSpacing, nonTermProb = self.nonTermProb,
-        bufferSize = self.bufferSize
+        bufferSize = self.bufferSize, nonEventProb = self.nonEventProb
     }
 
     self.transitions = dqn.TransitionTable(transition_args)
@@ -168,9 +170,17 @@ end
 
 
 function nql:preprocess(rawstate)
+    
     if self.preproc then
-        return self.preproc:forward(rawstate:float())
-                    :clone():reshape(self.state_dim)
+      local input_state = self.preproc:forward(rawstate:float())
+                                :clone():reshape(self.state_dim)
+
+     -- Check the input...
+    if self.verbose > 3 then
+      win = image.display({image=input_state:clone():reshape(84, 84), win=win})
+    end                          
+                                
+      return input_state
     end
 
     return rawstate
