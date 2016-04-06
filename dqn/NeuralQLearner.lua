@@ -170,7 +170,7 @@ end
 
 
 function nql:preprocess(rawstate)
-    
+
     if self.preproc then
       local input_state = self.preproc:forward(rawstate:float())
                                 :clone():reshape(self.state_dim)
@@ -186,8 +186,10 @@ function nql:preprocess(rawstate)
     return rawstate
 end
 
--- The idea here is to calculate the target actions for 
--- the minibatch and the associated errors.
+-- The idea here is to calculate the predicted ideal actions 
+-- each state in the minibatch, and to update the network
+-- such that the prediction matches the actual desireable
+-- outcome.
 function nql:getQUpdate(args)
     local s, a, r, s2, term, delta
     local q, q2, q2_max
@@ -226,7 +228,7 @@ function nql:getQUpdate(args)
     if self.rescale_r then
         delta:div(self.r_max)
     end
-    
+
     -- Add the discounted Q(s2, a) values to these rewards.
     delta:add(q2)
 
@@ -259,7 +261,7 @@ end
 
 function nql:qLearnMinibatch()
     -- Perform a minibatch Q-learning update:
-    -- w += alpha * (r + gamma max Q(s2,a2) - Q(s,a)) * dQ(s,a)/dw
+    -- w += lr * [r + (discount * max Q(s2,a2)) - Q(s,a)] * dQ(s,a)/dw
     assert(self.transitions:size() > self.minibatch_size)
 
     -- Load a minibatch of experiences.
@@ -341,33 +343,35 @@ function nql:perceive(reward, rawstate, terminal, testing, testing_ep)
     -- Add the preprocessed state and terminal value to the recent state table.
     self.transitions:add_recent_state(state, terminal)
 
-    -- TODO weird, currentFullState is never actually read...delete?
-    local currentFullState = self.transitions:get_recent()
-
     --Store transition s, a, r, s'
     if self.lastState and not testing then
         self.transitions:add(self.lastState, self.lastAction, reward,
                              self.lastTerminal, priority)
     end
 
-    -- Load validation data.
-    -- TODO why do this each step?
-    if self.numSteps == self.learn_start+1 and not testing then
+    -- Load validation data once we're past the initial phase.
+    -- This is just a sample of experiences. 
+    if self.numSteps > self.learn_start+1 and not testing then
         self:sample_validation_data()
     end
     
-    -- Get the recent states and resize for the Q network.
+    -- Get the hist_len most recent frames...
+    -- Dimensions should be (hist_len, width, height).
     curState= self.transitions:get_recent()
+     
+    -- Add a dimension to make this into a one-entry minibatch
+    -- to keep the network happy.
     curState = curState:resize(1, unpack(self.input_dims))
 
     -- OK use the Q network to select an action based on 
-    -- the trailing few states.
+    -- the trailing hist_len frames.
     local actionIndex = 1
     if not terminal then
         actionIndex = self:eGreedy(curState, testing_ep)
     end
 
     -- Add this action to our experiences.
+    -- This makes the recent states list complete with frames and actions.
     self.transitions:add_recent_action(actionIndex)
 
     -- Learn...
