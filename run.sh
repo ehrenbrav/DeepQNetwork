@@ -30,30 +30,30 @@ eps_end=0.1 # What epsilon ends up as going forward.
 eps_endt=replay_memory # This probability decreases over time, presumably as we get better.
 max_reward=10000 # Rewards are clipped to this value.
 min_reward=0 # Ditto.
-rescale_r=1 # Rescale rewards to [0, 1]
+rescale_r=nil # Rescale rewards to [0, 1]
 
 # LEARNING OPTIONS
-lr=0.00025 # This seems to be a *very* gentle learning rate...should it be adjusted if rewards are outside [-1, 1]?
-learn_start=600 # Only start learning after this many steps. Should be bigger than bufferSize. Was set to 50k for Atari.
+lr=.001 # This seems to be a *very* gentle learning rate...should it be adjusted if rewards are outside [-1, 1]?
+learn_start=100 # Only start learning after this many steps. Should be bigger than bufferSize. Was set to 50k for Atari.
 n_replay=1 # Minibatches to learn from each step.
 replay_memory=10000 # Set small to speed up debugging. 10M is the Atari setting... Big memory object!
-nonEventProb=0.25
+nonEventProb=0.05
 
 # Q NETWORK OPTIONS
 netfile="\"convnet_atari3\""
 target_q=1000 # How many steps to replace the target Q nework with the updated one.
 update_freq=10 # How many steps between learning? Changed from 4 for Atari... 
-hist_len=4 # Number of trailing frames to input into the Q network.
+hist_len=15 # Number of trailing frames to input into the Q network.
 discount=0.99 # Discount rate given to future rewards.
 
 # VALIDATION AND EVALUATION
-eval_freq=5000 # Evaluate the model every eval_freq steps by calculating the score per episode for a few games. 250k for Atari.
-eval_steps=2000 # How many steps does an evaluation last? 125k for Atari.
-prog_freq=2000 # How often do you want a progress report?
+eval_freq=150 # Evaluate the model every eval_freq steps by calculating the score per episode for a few games. 250k for Atari.
+eval_steps=3000 # How many steps does an evaluation last? 125k for Atari.
+prog_freq=1000 # How often do you want a progress report?
 
 # PERFORMANCE AND DEBUG OPTIONS
-gpu=1
-num_threads=8
+gpu=-1
+num_threads=4
 verbose=3 # 2 is default. 3 turns on debugging messages about what the model is doing.
 random_starts=0 # How many NOOPs to perform at the start of a game (random number up to this value). Shouldn't matter for SMB?
 seed=1
@@ -61,7 +61,8 @@ seed=1
 # THE UGLY UNDERBELLY
 pool_frms="type="$pool_frms_type",size="$pool_frms_size
 
-agent_params="lr="$lr",ep="$ep",ep_end="$eps_end",ep_endt="$eps_endt",discount="$discount",hist_len="$hist_len",learn_start="$learn_start",replay_memory="$replay_memory",update_freq="$update_freq",n_replay="$n_replay",network="$netfile",preproc="$preproc_net",state_dim="$state_dim",minibatch_size=32,ncols="$ncols",bufferSize=512,valid_size=500,target_q="$target_q",clip_delta=1",min_reward="$min_reward",max_reward="$max_reward",rescale_r="$rescale_r",nonEventProb="$nonEventProb" 
+# DEBUG - ADJUSTED BUFFER SIZE, ADJUSTED VALID SIZE, DELETED CLIP_DELTA.
+agent_params="lr="$lr",ep="$ep",ep_end="$eps_end",ep_endt="$eps_endt",discount="$discount",hist_len="$hist_len",learn_start="$learn_start",replay_memory="$replay_memory",update_freq="$update_freq",n_replay="$n_replay",network="$netfile",preproc="$preproc_net",state_dim="$state_dim",minibatch_size=32,ncols="$ncols",bufferSize=64,valid_size=32,target_q="$target_q"",min_reward="$min_reward",max_reward="$max_reward",rescale_r="$rescale_r",nonEventProb="$nonEventProb" 
 
 args="-framework $FRAMEWORK -game_path $game_path -name $agent_name -env $ENV -env_params $env_params -agent $agent -agent_params $agent_params -steps $steps -eval_freq $eval_freq -eval_steps $eval_steps -prog_freq $prog_freq -save_freq $save_freq -actrep $actrep -gpu $gpu -random_starts $random_starts -pool_frms $pool_frms -seed $seed -threads $num_threads -verbose $verbose"
 
