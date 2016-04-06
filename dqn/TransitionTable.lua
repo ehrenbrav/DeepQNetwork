@@ -125,7 +125,10 @@ function trans:sample_one()
     -- Loop to find a valid experience to send back.
     while not valid do
     
-        -- start at 2 because of previous action
+        -- Start at 2 because the experience at 1 might not have
+        -- an action yet?
+        -- The upper bound ensures there's enough frames to 
+        -- return the trailing hist_len frames.
         -- Grab a random experience from the memory table.
         index = torch.random(2, self.numEntries-self.recentMemSize)
         
@@ -151,6 +154,7 @@ function trans:sample_one()
         end
     end
 
+    -- This returns the trailing hist_len frames from the requested index.
     return self:get(index)
 end
 
@@ -225,47 +229,6 @@ function trans:concatFrames(index, use_recent)
     return fullstate
 end
 
-
-function trans:concatActions(index, use_recent)
-    local act_hist = torch.FloatTensor(self.histLen, self.numActions)
-    if use_recent then
-        a, t = self.recent_a, self.recent_t
-    else
-        a, t = self.a, self.t
-    end
-
-    -- Zero out frames from all but the most recent episode.
-    local zero_out = false
-    local episode_start = self.histLen
-
-    for i=self.histLen-1,1,-1 do
-        if not zero_out then
-            for j=index+self.histIndices[i]-1,index+self.histIndices[i+1]-2 do
-                if t[j] == 1 then
-                    zero_out = true
-                    break
-                end
-            end
-        end
-
-        if zero_out then
-            act_hist[i]:zero()
-        else
-            episode_start = i
-        end
-    end
-
-    if self.zeroFrames == 0 then
-        episode_start = 1
-    end
-
-    -- Copy frames from the current episode.
-    for i=episode_start,self.histLen do
-        act_hist[i]:copy(self.action_encodings[a[index+self.histIndices[i]-1]])
-    end
-
-    return act_hist
-end
 
 -- Get the hist_len most recent frames.
 function trans:get_recent()
