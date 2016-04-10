@@ -127,6 +127,7 @@ while step < opt.steps do
         assert(step==agent.numSteps, 'trainer step: ' .. step ..
                 ' & agent.numSteps: ' .. agent.numSteps)
         print("Steps: ", step)
+        print("Epsilon: ", agent.ep)
         agent:report()
         collectgarbage()
     end
@@ -148,7 +149,7 @@ while step < opt.steps do
 
         local eval_time = sys.clock()
         for estep=1,opt.eval_steps do
-            local action_index = agent:perceive(reward, screen, terminal, true, 0.05)
+            local action_index = agent:perceive(reward, screen, terminal, true, .05)
 
             -- Play game in test mode (episodes don't end when losing a life)
             screen, reward, terminal = game_env:step(game_actions[action_index])
@@ -160,14 +161,24 @@ while step < opt.steps do
 
             -- record every reward
             episode_reward = episode_reward + reward
+            
             if reward ~= 0 then
                nrewards = nrewards + 1
+            end
+
+            if opt.verbose > 3 and reward ~= 0 then
+              print("Episode Reward: " .. episode_reward)
+              print ("Number of Rewards: " .. nrewards)
             end
 
             if terminal then
                 total_reward = total_reward + episode_reward
                 episode_reward = 0
                 nepisodes = nepisodes + 1
+
+                if opt.verbose > 3 then
+                  print("Total Reward: " .. total_reward)
+                end
                 if opt.random_starts > 0 then
                   screen, reward, terminal = game_env:nextRandomGame()
                 else

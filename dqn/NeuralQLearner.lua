@@ -351,7 +351,7 @@ function nql:perceive(reward, rawstate, terminal, testing, testing_ep)
 
     -- Load validation data once we're past the initial phase.
     -- This is just a sample of experiences. 
-    if self.numSteps > self.learn_start+1 and not testing then
+    if self.numSteps == self.learn_start+1 and not testing then
         self:sample_validation_data()
     end
     
