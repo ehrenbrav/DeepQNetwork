@@ -504,3 +504,18 @@ function nql:report()
     print(get_weight_norms(self.network))
     print(get_grad_norms(self.network))
 end
+
+-- Prints the hist_len most recent frames.
+-- Assumes images are square...
+function nql:printRecent()
+
+    print("Saving frame snapshot...")
+
+    for i = 1, self.hist_len do
+    
+      local filename = "Frame" .. self.transitions.histIndices[i] .. ".png"
+      image.save(filename, self.transitions.recent_s[self.transitions.histIndices[i]]:resize(self.ncols, self.state_dim^.5, self.state_dim^.5))
+      --image.save(filename, self.transitions.recent_s[i]:clone():resize(self.ncols, self.state_dim^.5, self.state_dim^.5))
+      
+    end
+end

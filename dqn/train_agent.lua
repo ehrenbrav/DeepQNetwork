@@ -21,6 +21,7 @@ cmd:option('-env_params', '', 'string of environment parameters')
 cmd:option('-pool_frms', '',
            'string of frame pooling parameters (e.g.: size=2,type="max")')
 cmd:option('-actrep', 1, 'how many times to repeat action')
+cmd:option('-gameOverPenalty', 0, 'penalty for the game ending')
 cmd:option('-random_starts', 0, 'play action 0 between 1 and random_starts ' ..
            'number of times at the start of each training episode')
 
@@ -129,6 +130,11 @@ while step < opt.steps do
         print("Steps: ", step)
         print("Epsilon: ", agent.ep)
         agent:report()
+        
+        -- Save the hist_len most recent frames.
+        if opt.verbose > 3 then
+          agent:printRecent()
+        end
         collectgarbage()
     end
 
