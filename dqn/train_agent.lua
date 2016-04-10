@@ -130,6 +130,11 @@ while step < opt.steps do
         print("Steps: ", step)
         print("Epsilon: ", agent.ep)
         agent:report()
+        
+        -- Save the hist_len most recent frames.
+        if opt.verbose > 3 then
+          agent:printRecent()
+        end
         collectgarbage()
     end
 
