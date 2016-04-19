@@ -139,7 +139,7 @@ function nql:__init(args)
     self.tderr_avg = 0 -- Temporal-difference error running average.
 
     self.q_max = 1
-    self.r_max = 1
+    self.r_max = math .max(torch.abs(self.max_reward), torch.abs(self.min_reward))
 
     self.w, self.dw = self.network:getParameters() -- Load the weights.
     self.dw:zero() -- Set gradient to zero.
@@ -225,6 +225,7 @@ function nql:getQUpdate(args)
     -- Set delta equal to the rewards in the minibatch.
     delta = r:clone():float()
 
+    -- Rescale the reward to [-1, 1] if requested.
     if self.rescale_r then
         delta:div(self.r_max)
     end
@@ -311,7 +312,7 @@ function nql:sample_validation_data()
     self.valid_term = term:clone()
 end
 
-
+-- Called once at the start to grab some random early experiences.
 function nql:compute_validation_statistics()
     local targets, delta, q2_max = self:getQUpdate{s=self.valid_s,
         a=self.valid_a, r=self.valid_r, s2=self.valid_s2, term=self.valid_term}
@@ -320,7 +321,7 @@ function nql:compute_validation_statistics()
     self.tderr_avg = delta:clone():abs():mean()
 end
 
-
+-- Main function for analyzing the behavior. 
 function nql:perceive(reward, rawstate, terminal, testing, testing_ep)
 
     -- Preprocess state (will be set to nil if terminal)
@@ -333,11 +334,6 @@ function nql:perceive(reward, rawstate, terminal, testing, testing_ep)
     end
     if self.min_reward then
         reward = math.max(reward, self.min_reward)
-    end
-    
-    -- Rescale the reward, if requested.
-    if self.rescale_r then
-        self.r_max = math.max(self.r_max, reward)
     end
   
     -- Add the preprocessed state and terminal value to the recent state table.
