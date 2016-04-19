@@ -150,6 +150,7 @@ function nql:__init(args)
     self.g  = self.dw:clone():fill(0) 
     self.g2 = self.dw:clone():fill(0)
 
+    -- Initialize the target nework to be equal to the current network.
     if self.target_q then
         self.target_network = self.network:clone()
     end
@@ -214,7 +215,7 @@ function nql:getQUpdate(args)
         target_q_net = self.network
     end
 
-    -- Compute max_a Q(s_2, a).
+    -- Compute max_a Q(s_2, a) using the *target* network.
     -- This yields the Q values for the best actions.
     q2_max = target_q_net:forward(s2):float():max(2)
 
@@ -234,6 +235,7 @@ function nql:getQUpdate(args)
     delta:add(q2)
 
     -- q = Q(s,a)
+    -- This uses the *current* network not the target network!
     local q_all = self.network:forward(s):float()
     q = torch.FloatTensor(q_all:size(1))
     for i=1,q_all:size(1) do
@@ -312,16 +314,21 @@ function nql:sample_validation_data()
     self.valid_term = term:clone()
 end
 
--- Called once at the start to grab some random early experiences.
+-- Compute the mean Q value and the TD error for our early validation experiences.
 function nql:compute_validation_statistics()
     local targets, delta, q2_max = self:getQUpdate{s=self.valid_s,
         a=self.valid_a, r=self.valid_r, s2=self.valid_s2, term=self.valid_term}
 
+    -- This is the average Q value of the target network for the highest-value action.
+    -- This ideally should rise with learning and stabalize at a reasonable value...
     self.v_avg = self.q_max * q2_max:mean()
+    
+    -- This in essence is the difference between the target and current networks' value estimate for Q(s, a).
+    -- This should approach zero with time as learning slows...
     self.tderr_avg = delta:clone():abs():mean()
 end
 
--- Main function for analyzing the behavior. 
+-- Main function for observing the results and learning.
 function nql:perceive(reward, rawstate, terminal, testing, testing_ep)
 
     -- Preprocess state (will be set to nil if terminal)
