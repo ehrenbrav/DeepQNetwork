@@ -438,7 +438,7 @@ function nql:greedy(state)
         state = state:cuda()
     end
     
-    -- Feed the state into the network.
+    -- Feed the state into the current network.
     local q = self.network:forward(state):float():squeeze()
     
     -- Initialize the best Q and best action variables.
