@@ -27,14 +27,14 @@ agent_name=$agent_type"_"$1"_FULL_Y"
 actrep=8 # Number of times an action is repeated (and a screen returned). 4 for Atari...
 ep=1 # The probability of choosing a random action rather than the best predicted action.
 eps_end=0.1 # What epsilon ends up as going forward.
-eps_endt=1000000 # This probability decreases over time, presumably as we get better.
+eps_endt=500000 # This probability decreases over time, presumably as we get better.
 max_reward=10000 # Rewards are clipped to this value.
 min_reward=-10000 # Ditto.
 rescale_r=1 # Rescale rewards to [0, 1]
-gameOverPenalty=0 # Gives a negative reward equal to the current score upon dying.
+gameOverPenalty=1 # Gives a negative reward equal to the current score upon dying.
 
 # LEARNING OPTIONS
-lr=0.001 # .00025 for Atari.
+lr=0.01 # .00025 for Atari.
 learn_start=5000 # Only start learning after this many steps. Should be bigger than bufferSize. Was set to 50k for Atari.
 replay_memory=1000000 # Set small to speed up debugging. 10M is the Atari setting... Big memory object!
 n_replay=4 # Minibatches to learn from each learning step.
