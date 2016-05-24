@@ -38,6 +38,7 @@ sudo apt-get install -qqy liblua5.1-0-dev
 sudo apt-get install -qqy libgd-dev
 sudo apt-get install -qqy scons
 sudo apt-get install -qqy libgtk2.0-dev
+sudo apt-get install -qqy libsdl-dev
 sudo apt-get update
 
 
@@ -129,6 +130,11 @@ sed -i "s/LUABIN=lua5.1/LUABIN=..\/..\/bin\/luajit/" Makefile
 $PREFIX/bin/luarocks make
 RET=$?; if [ $RET -ne 0 ]; then echo "Error. Exiting."; exit $RET; fi
 echo "Lua-GD installation completed"
+
+echo "Installing GPU dependencies..."
+$PREFIX/bin/luarocks install cutorch
+$PREFIX/bin/luarocks install cunn
+echo "Done trying to install the GPU dependencies."
 
 echo
 echo "You can run experiments by executing: "
