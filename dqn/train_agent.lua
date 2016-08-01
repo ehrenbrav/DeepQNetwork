@@ -30,7 +30,7 @@ cmd:option('-network', '', 'reload pretrained network')
 cmd:option('-agent', '', 'name of agent file to use')
 cmd:option('-agent_params', '', 'string of agent parameters')
 cmd:option('-seed', 1, 'fixed input seed for repeatable experiments')
-cmd:option('-saveNetworkParams', false,
+cmd:option('-saveNetworkParams', true,
            'saves the agent network in a separate file')
 cmd:option('-prog_freq', 5*10^3, 'frequency of progress output')
 cmd:option('-save_freq', 5*10^4, 'the model is saved every save_freq steps')
