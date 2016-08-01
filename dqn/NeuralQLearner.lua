@@ -78,7 +78,7 @@ function nql:__init(args)
         -- try to load saved agent
         local err_msg, exp = pcall(torch.load, self.network)
         if not err_msg then
-            error("Could not find network file ")
+            error("Could not find network file. Error: " .. exp)
         end
         if self.best and exp.best_model then
             self.network = exp.best_model
@@ -103,7 +103,7 @@ function nql:__init(args)
     end
     msg, err = pcall(require, self.preproc)
     if not msg then
-        error("Error loading preprocessing net")
+        error("Error loading preprocessing net. Error: " .. err)
     end
     self.preproc = err
     self.preproc = self:preproc()
