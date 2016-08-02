@@ -17,7 +17,7 @@ function nql:__init(args)
     self.actions    = args.actions
     self.n_actions  = #self.actions
     self.verbose    = args.verbose
-    self.best       = args.best
+    self.best       = args.best or 1 -- Whether we should load the best or the latest network.
 
     --- epsilon annealing
     self.ep_start   = args.ep or 1
@@ -84,7 +84,7 @@ function nql:__init(args)
             print("Loading best model...")
             self.network = exp.best_model
         else
-            print("Loading the latest model...")
+            print("Loading the latest (not necessarily the best) model...")
             self.network = exp.model
         end
     else
