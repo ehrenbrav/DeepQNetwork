@@ -73,7 +73,8 @@ im:gifAnimAdd(gif_filename, false, 0, 0, 7, gd.DISPOSAL_NONE)
 
 -- remember the image and show it first
 local previm = im
-local win = image.display({image=screen})
+local win = nil
+-- local win = image.display({image=screen})
 
 print("Started playing...")
 
@@ -89,7 +90,7 @@ while not terminal do
     screen, reward, terminal = game_env:step(game_actions[action_index], false)
 
     -- display screen
-    image.display({image=screen, win=win})
+    -- image.display({image=screen, win=win})
 
     -- create gd image from tensor
     jpg = image.compressJPG(screen:squeeze(), 100)
