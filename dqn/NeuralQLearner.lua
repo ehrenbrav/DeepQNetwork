@@ -81,8 +81,10 @@ function nql:__init(args)
             error("Could not find network file. Error: " .. exp)
         end
         if self.best and exp.best_model then
+            print("Loading best model...")
             self.network = exp.best_model
         else
+            print("Loading the latest model...")
             self.network = exp.model
         end
     else
