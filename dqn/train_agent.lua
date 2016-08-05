@@ -155,19 +155,19 @@ while step < opt.steps do
 
         local eval_time = sys.clock()
         for estep=1,opt.eval_steps do
-            local action_index = agent:perceive(reward, screen, terminal, true, .05)
+            local action_index = agent:perceive(reward, screen, terminal, true, 0.05)
 
             -- Play game in test mode (episodes don't end when losing a life)
             screen, reward, terminal = game_env:step(game_actions[action_index])
 
             -- display screen
+            -- This seems to cause crashes :\
             -- win = image.display({image=screen, win=win})
 
             if estep%1000 == 0 then collectgarbage() end
 
             -- record every reward
             episode_reward = episode_reward + reward
-            
             if reward ~= 0 then
                nrewards = nrewards + 1
             end
