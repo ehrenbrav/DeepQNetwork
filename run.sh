@@ -9,7 +9,7 @@ ENV=$1
 FRAMEWORK="neswrap" # Wrapper for the FCEUX Nintendo emulator.
 game_path=$PWD"/roms/"
 env_params="useRGB=true"
-steps=50000000 # Total steps to run the model.
+steps=300000 # Total steps to run the model.
 save_freq=30000 # Save every save_freq steps. Save early and often! 125k for Atari.
 
 # PREPROCESSOR OPTIONS
@@ -27,16 +27,16 @@ agent_name=$agent_type"_"$1"_FULL_Y"
 actrep=8 # Number of times an action is repeated (and a screen returned). 4 for Atari...
 ep=1 # The probability of choosing a random action rather than the best predicted action.
 eps_end=0.1 # What epsilon ends up as going forward.
-eps_endt=500000 # This probability decreases over time, presumably as we get better.
+eps_endt=300000 # This probability decreases over time, presumably as we get better.
 max_reward=10000 # Rewards are clipped to this value.
 min_reward=-10000 # Ditto.
 rescale_r=1 # Rescale rewards to [0, 1]
-gameOverPenalty=1 # Gives a negative reward equal to the current score upon dying.
+gameOverPenalty=1 # Gives a negative reward upon dying.
 
 # LEARNING OPTIONS
 lr=0.01 # .00025 for Atari.
 learn_start=5000 # Only start learning after this many steps. Should be bigger than bufferSize. Was set to 50k for Atari.
-replay_memory=1000000 # Set small to speed up debugging. 10M is the Atari setting... Big memory object!
+replay_memory=100000 # Set small to speed up debugging. 10M is the Atari setting... Big memory object!
 n_replay=4 # Minibatches to learn from each learning step.
 nonEventProb=nil # Probability of selecting a non-reward-bearing experience.
 clip_delta=1 # Limit the delta to +/- 1.
@@ -49,8 +49,8 @@ hist_len=4 # Number of trailing frames to input into the Q network. 4 for Atari.
 discount=0.99 # Discount rate given to future rewards.
 
 # VALIDATION AND EVALUATION
-eval_freq=40000 # Evaluate the model every eval_freq steps by calculating the score per episode for a few games. 250k for Atari.
-eval_steps=20000 # How many steps does an evaluation last? 125k for Atari.
+eval_freq=20000 # Evaluate the model every eval_freq steps by calculating the score per episode for a few games. 250k for Atari.
+eval_steps=10000 # How many steps does an evaluation last? 125k for Atari.
 prog_freq=40000 # How often do you want a progress report?
 
 # PERFORMANCE AND DEBUG OPTIONS
