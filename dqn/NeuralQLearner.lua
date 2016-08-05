@@ -63,7 +63,7 @@ function nql:__init(args)
     self.bufferSize     = args.bufferSize or 512
 
     self.transition_params = args.transition_params or {}
-    
+
     self.network    = args.network or self:createNetwork()
 
     -- check whether there is a network file
@@ -146,10 +146,10 @@ function nql:__init(args)
     self.w, self.dw = self.network:getParameters() -- Load the weights.
     self.dw:zero() -- Set gradient to zero.
 
-    self.deltas = self.dw:clone():fill(0) 
+    self.deltas = self.dw:clone():fill(0)
 
     self.tmp= self.dw:clone():fill(0)
-    self.g  = self.dw:clone():fill(0) 
+    self.g  = self.dw:clone():fill(0)
     self.g2 = self.dw:clone():fill(0)
 
     -- Initialize the target nework to be equal to the current network.
@@ -178,7 +178,7 @@ function nql:preprocess(rawstate)
       local input_state = self.preproc:forward(rawstate:float())
                                 :clone():reshape(self.state_dim)
 
-     -- Check the input...
+     -- Optionally display the preprocessed image...
     if self.verbose > 3 then
       win = image.display({image=input_state:clone():reshape(84, 84), win=win})
     end                          
@@ -217,9 +217,10 @@ function nql:getQUpdate(args)
         target_q_net = self.network
     end
 
-    -- Compute max_a Q(s_2, a) using the *target* network.
+    -- Using *Double* DQN here...
+    -- Compute max_a Q(s_2, a) using the *online* network.
     -- This yields the Q values for the best actions.
-    q2_max = target_q_net:forward(s2):float():max(2)
+    q2_max = self.network:forward(s2):float():max(2)
 
     -- Compute q2 = (1-terminal) * gamma * max_a Q(s2, a)
     -- Discounted by gamma and set to zero if terminal.
@@ -236,9 +237,11 @@ function nql:getQUpdate(args)
     -- Add the discounted Q(s2, a) values to these rewards.
     delta:add(q2)
 
+    -- Using *Double* DQN here...
     -- q = Q(s,a)
-    -- This uses the *current* network not the target network!
-    local q_all = self.network:forward(s):float()
+    -- This estimates future rewards using the *target* network, 
+    -- not the online network, using the actions selected by the *online* network!
+    local q_all = target_q_net:forward(s):float()
     q = torch.FloatTensor(q_all:size(1))
     for i=1,q_all:size(1) do
         q[i] = q_all[i][a[i]]
