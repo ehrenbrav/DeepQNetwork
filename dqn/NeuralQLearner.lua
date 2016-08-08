@@ -194,8 +194,8 @@ end
 -- such that the prediction matches the actual desireable
 -- outcome.
 function nql:getQUpdate(args)
-    local s, a, r, s2, term, delta
-    local q, q2, q2_max
+    local s, a, r, s2, term, delta, best_a
+    local q, q2, q2_online, q2_target
 
     s = args.s
     a = args.a
@@ -218,9 +218,18 @@ function nql:getQUpdate(args)
     end
 
     -- Using *Double* DQN here...
-    -- Compute max_a Q(s_2, a) using the *online* network.
-    -- This yields the Q values for the best actions.
-    q2_max = self.network:forward(s2):float():max(2)
+    -- For each s2 in the minibatch,
+    -- pick the action with the highest value using the *online* network
+    -- and then calculate the Q-value of s2 given this action using the *target* network.
+    q2_online, best_a = self.network:forward(s2):float():max(2)
+    
+    -- Get the Q-values for the best actions we identified above, using the *target* network.
+    q2_target = target_q_net:forward(s2):float()
+    q2_max = torch.FloatTensor(best_a:size())
+    for i=1, self.minibatch_size do
+      local a_index = best_a[i][1]
+      q2_max[i] = q2_target[i][a_index]
+    end
 
     -- Compute q2 = (1-terminal) * gamma * max_a Q(s2, a)
     -- Discounted by gamma and set to zero if terminal.
@@ -237,11 +246,9 @@ function nql:getQUpdate(args)
     -- Add the discounted Q(s2, a) values to these rewards.
     delta:add(q2)
 
-    -- Using *Double* DQN here...
     -- q = Q(s,a)
-    -- This estimates future rewards using the *target* network, 
-    -- not the online network, using the actions selected by the *online* network!
-    local q_all = target_q_net:forward(s):float()
+    -- This estimates the value of state s for actions a using the *online* network, 
+    local q_all = self.network:forward(s):float()
     q = torch.FloatTensor(q_all:size(1))
     for i=1,q_all:size(1) do
         q[i] = q_all[i][a[i]]
