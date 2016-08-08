@@ -226,7 +226,7 @@ function nql:getQUpdate(args)
     -- Get the Q-values for the best actions we identified above, using the *target* network.
     q2_target = target_q_net:forward(s2):float()
     q2_max = torch.FloatTensor(best_a:size())
-    for i=1, self.minibatch_size do
+    for i=1, best_a:size(1) do
       local a_index = best_a[i][1]
       q2_max[i] = q2_target[i][a_index]
     end
