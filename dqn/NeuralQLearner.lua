@@ -17,7 +17,7 @@ function nql:__init(args)
     self.actions    = args.actions
     self.n_actions  = #self.actions
     self.verbose    = args.verbose
-    self.best       = args.best or 1 -- Whether we should load the best or the latest network.
+    self.best       = args.best  -- Whether we should load the best or the latest network.
 
     --- epsilon annealing
     self.ep_start   = args.ep or 1

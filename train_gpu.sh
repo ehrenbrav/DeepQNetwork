@@ -30,7 +30,7 @@ eps_end=0.01 # What epsilon ends up as going forward.
 eps_endt=1000000 # This probability decreases over time, presumably as we get better.
 max_reward=10000 # Rewards are clipped to this value.
 min_reward=-10000 # Ditto.
-rescale_r=1 # Rescale rewards to [0, 1]
+rescale_r=1 # Rescale rewards to [-1, 1]
 gameOverPenalty=1 # Gives a negative reward upon dying.
 
 # LEARNING OPTIONS
